@@ -256,8 +256,70 @@ glVertex3f(0,0,10);
 
 glEnd();
 
+glBegin(GL_TRIANGLES);
+glColor3f(0,1,0);
+glVertex3f(3,4,0);
+glVertex3f(2,0,1);
+glVertex3f(4,0,1);
+
+glColor3f(0,1,0);
+glVertex3f(3,4,0);
+glVertex3f(2,0,1);
+glVertex3f(2,0,-1);
+
+glColor3f(0,1,0);
+glVertex3f(3,4,0);
+glVertex3f(4,0,1);
+glVertex3f(4,0,-1);
+
+glColor3f(8,76,15);
+glVertex3f(3,4,0);
+glVertex3f(2.3,2,0.7);
+glVertex3f(3.7,2,0.7);
+
+glColor3f(8,76,15);
+glVertex3f(3,4,0);
+glVertex3f(2.3,2,0.7);
+glVertex3f(2.3,2,-0.7);
+
+glColor3f(8,76,15);
+glVertex3f(3,4,0);
+glVertex3f(3.7,2,0.7);
+glVertex3f(3.7,2,-0.7);
+glEnd();
 
 
+glBegin(GL_TRIANGLES);
+glColor3f(0,1,0);
+glVertex3f(-3,4,0);
+glVertex3f(-2,0,1);
+glVertex3f(-4,0,1);
+
+glColor3f(0,1,0);
+glVertex3f(-3,4,0);
+glVertex3f(-2,0,1);
+glVertex3f(-2,0,-1);
+
+glColor3f(0,1,0);
+glVertex3f(-3,4,0);
+glVertex3f(-4,0,1);
+glVertex3f(-4,0,-1);
+
+glColor3f(8,76,15);
+glVertex3f(-3,4,0);
+glVertex3f(-2.3,2,0.7);
+glVertex3f(-3.7,2,0.7);
+
+glColor3f(8,76,15);
+glVertex3f(-3,4,0);
+glVertex3f(-2.3,2,0.7);
+glVertex3f(-2.3,2,-0.7);
+
+glColor3f(8,76,15);
+glVertex3f(-3,4,0);
+glVertex3f(-3.7,2,0.7);
+glVertex3f(-3.7,2,-0.7);
+glEnd();
 
 
 
