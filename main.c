@@ -1,327 +1,231 @@
-#include<GL/glut.h>
-#include<stdlib.h>
-#include<time.h>
+#include <stdlib.h>
+#include <GL/glut.h>
 
 
-double x_cur, y_cur, z_cur;
-static int window_width,window_height;
-static double v_x,v_y,v_z;
-static float size=0.5;
+#define TIMER_ID 0
+#define TIMER_INTERVAL 50
+
+int animation_ongoing;
+
+float move;
 
 
-static void on_display (void);
-static void on_keyboard(unsigned char key, int x, int y);
-static void on_reshape(int width, int height);
+static void on_keyboard(unsigned char key,int x, int y);
+static void on_reshape(int width,int height);
+static void on_timer(int id);
+static void on_display(void);
+static void lights();
+static void material(int value);
 
-void pomeri(double v_x,double v_y,double v_z);
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
+    /* Inicijalizuje se GLUT. */
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 
-glutInit(&argc,argv);
+    /* Kreira se prozor. */
+    glutInitWindowSize(700, 500);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow(argv[0]);
 
-glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+    /* Registruju se callback funkcije. */
+    glutKeyboardFunc(on_keyboard);
+    glutReshapeFunc(on_reshape);
+    glutDisplayFunc(on_display);
 
-glutInitWindowSize(600,600);
+    /* Obavlja se OpenGL inicijalizacija. */
+    glClearColor(0, 0, 0, 0);
+    glEnable(GL_DEPTH_TEST);
 
-glutInitWindowPosition(100,100);
+     animation_ongoing=0;  
+     move=0;
 
-glutCreateWindow(argv[0]);
+    /* Program ulazi u glavnu petlju. */
+    glutMainLoop();
 
+    return 0;}
 
-glutKeyboardFunc(on_keyboard);
-glutReshapeFunc(on_reshape);
-glutDisplayFunc(on_display);
+    static void on_timer(int id)
+{
+if(TIMER_ID!=id)
+return;
 
-
-
-
-x_cur = 0.0;
-y_cur = 0.0;
-z_cur = 0.0;
-
-
-glClearColor(0.05,0.05,0.05,0);
-
-glEnable(GL_DEPTH_TEST);
-glLineWidth(2);
-
-glutMainLoop();
-
-return 0;
-
-
-}
-
-
-static void on_keyboard(unsigned char key, int x, int y){
-
-
-switch(key){
-
-case 27:
-exit(0);
-break;
-case 'a':
-pomeri(-0.1,0,0);
-break;
-case 'd':
-pomeri(0.1,0,0);
-break;
-case 'w':
-pomeri(0,0,-0.1);
-break;
-case 's':
-pomeri(0,0,0.1);
-break;
-case 'q':
-pomeri(0,0.1,0);
-break;
-case 'e':
-pomeri(0,-0.1,0);
-break;
-}
-}
-
-
-static void on_reshape(int width, int height){
-
-window_width=width;
-window_height=height;
-
-}
-
-void pomeri(double v_x,double v_y,double v_z){
-
-x_cur+=v_x;
-
-if(x_cur<=-(1-size/2) || x_cur>= 1-size/2)
-v_x*=-1;
-
-y_cur+=v_y;
-
-if(y_cur<=-(1-size/2) || y_cur>= 1-size/2)
-v_y*=-1;
-z_cur+=v_z;
-
-if(z_cur<=-(1-size/2) || z_cur>= 1-size/2)
-v_z*=-1;
+move+=0.01;
 
 glutPostRedisplay();
 
+if(animation_ongoing){
+
+glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);}
+
+
+}
+
+static void on_keyboard(unsigned char key, int x, int y)
+{
+    switch (key) {
+    case 27:
+        /* Zavrsava se program. */
+        exit(0);
+        break;
+
+    case 'g':
+    if(!animation_ongoing){
+       animation_ongoing=1;
+       glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
+    }
+    break;
+
+    case 's':
+    animation_ongoing=0;
+    break;
+
+    case 'd':
+    move+=0.3;
+    glutPostRedisplay();
+    break;
+
+    case 'a':
+    move-=0.3;
+    glutPostRedisplay();
+    break;
+
+    }
+}
+
+static void on_reshape(int width, int height)
+{
+    /* Podesava se viewport. */
+    glViewport(0, 0, width, height);
+
+    /* Podesava se projekcija. */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(60, (float) width / height, 1, 10);
 }
 
 
-static void on_display(void){
+static void lights(){
 
-glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+/* Pozicija svetla (u pitanju je direkcionalno svetlo). */
+    GLfloat light_position[] = { 0, 3, 2, 0 };
 
-glViewport(0,0,window_width,window_height);
+    /* Ambijentalna boja svetla. */
+    GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1 };
 
-glMatrixMode(GL_PROJECTION);
+    /* Difuzna boja svetla. */
+    GLfloat light_diffuse[] = { 0.7, 0.7, 0.7, 1 };
 
-glLoadIdentity();
+    /* Spekularna boja svetla. */
+    GLfloat light_specular[] = { 0.9, 0.9, 0.9, 1 };
 
-gluPerspective(60,window_width/(float)window_height,1,25);
-
-glMatrixMode(GL_MODELVIEW);
-glLoadIdentity();
-
-gluLookAt(10/5,20/5,30/5,0,0,0,0,1,0);
-
-glPushMatrix();
-
-
-/*
-  a glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-  b glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-  c glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-  d glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-  e glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-  f glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-  g glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
- */
-
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glEnd();
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-
-glEnd();
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
-glEnd();
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-glEnd();
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glEnd();
-
-glColor3f(0,0,1);
-
-glBegin(GL_QUADS);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
- glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
- glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glEnd();
-
-glPopMatrix();
-
-glBegin(GL_LINES);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
- glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur+0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur+0.5,y_cur-0.5,z_cur-0.5);
-glVertex3f(x_cur+0.5,y_cur+0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur-0.5);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur-0.5);
-glColor3f(0,1,0);
-glVertex3f(x_cur-0.5,y_cur-0.5,z_cur+0.5);
-glVertex3f(x_cur-0.5,y_cur+0.5,z_cur+0.5);
+glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 
 
 
 
-glColor3f(1,0,0);
-glVertex3f(0,0,0);
-glVertex3f(10,0,0);
-glColor3f(0,1,0);
-glVertex3f(0,0,0);
-glVertex3f(0,10,0);
-glColor3f(0,0,1);
-glVertex3f(0,0,0);
-glVertex3f(0,0,10);
-
-glEnd();
-
-glBegin(GL_TRIANGLES);
-glColor3f(0,1,0);
-glVertex3f(3,4,0);
-glVertex3f(2,0,1);
-glVertex3f(4,0,1);
-
-glColor3f(0,1,0);
-glVertex3f(3,4,0);
-glVertex3f(2,0,1);
-glVertex3f(2,0,-1);
-
-glColor3f(0,1,0);
-glVertex3f(3,4,0);
-glVertex3f(4,0,1);
-glVertex3f(4,0,-1);
-
-glColor3f(8,76,15);
-glVertex3f(3,4,0);
-glVertex3f(2.3,2,0.7);
-glVertex3f(3.7,2,0.7);
-
-glColor3f(8,76,15);
-glVertex3f(3,4,0);
-glVertex3f(2.3,2,0.7);
-glVertex3f(2.3,2,-0.7);
-
-glColor3f(8,76,15);
-glVertex3f(3,4,0);
-glVertex3f(3.7,2,0.7);
-glVertex3f(3.7,2,-0.7);
-glEnd();
-
-
-glBegin(GL_TRIANGLES);
-glColor3f(0,1,0);
-glVertex3f(-3,4,0);
-glVertex3f(-2,0,1);
-glVertex3f(-4,0,1);
-
-glColor3f(0,1,0);
-glVertex3f(-3,4,0);
-glVertex3f(-2,0,1);
-glVertex3f(-2,0,-1);
-
-glColor3f(0,1,0);
-glVertex3f(-3,4,0);
-glVertex3f(-4,0,1);
-glVertex3f(-4,0,-1);
-
-glColor3f(8,76,15);
-glVertex3f(-3,4,0);
-glVertex3f(-2.3,2,0.7);
-glVertex3f(-3.7,2,0.7);
-
-glColor3f(8,76,15);
-glVertex3f(-3,4,0);
-glVertex3f(-2.3,2,0.7);
-glVertex3f(-2.3,2,-0.7);
-
-glColor3f(8,76,15);
-glVertex3f(-3,4,0);
-glVertex3f(-3.7,2,0.7);
-glVertex3f(-3.7,2,-0.7);
-glEnd();
-
-
-
-glutSwapBuffers();
 }
+
+static void material(int value){
+/* Koeficijenti ambijentalne refleksije materijala. */
+    GLfloat ambient_coeffs[] = { 0.1, 0.1, 0.3, 1 };
+
+    /* Koeficijenti difuzne refleksije materijala. */
+    GLfloat diffuse_coeffs[] = { 0.3, 0.0, 0.0, 1 };
+
+    diffuse_coeffs[value]=1.0;
+
+    /* Koeficijenti spekularne refleksije materijala. */
+    GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
+
+    /* Koeficijent glatkosti materijala. */
+    GLfloat shininess = 20;
+
+/* Podesavaju se parametri materijala. */
+    glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_coeffs);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular_coeffs);
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+
+}
+
+
+
+
+
+
+static void on_display(void)
+{
+   
+
+    /* Brise se prethodni sadrzaj prozora. */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    lights();
+
+    /* Podesava se vidna tacka. */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(0,3.7,8, 0, 0, 0, 0, 1, 0);
+
+
+    /* Kreira se kaciga. */
+    material(2);
+    glPushMatrix();
+    glTranslatef(move,0,5);
+    glutSolidSphere(0.6, 40, 40);
+    glPopMatrix();
+
+    /*Kreira se jelka*/
+
+    int i=50;
+
+    while(i>0){
+     material(1);
+    glPushMatrix();
+    glTranslatef(5,-3,i);
+    glRotatef(240,1,0,0);
+    glutSolidCone(1.2,6,40,40);
+    glPopMatrix();
+
+     material(1);
+    glPushMatrix();
+    glTranslatef(5,-3,i-1);
+    glRotatef(240,1,0,0);
+    glutSolidCone(1.2,4.5,40,40);
+    glPopMatrix();
+
+     material(1);
+    glPushMatrix();
+    glTranslatef(-5,-3,i);
+    glRotatef(240,1,0,0);
+    glutSolidCone(1.2,6,40,40);
+    glPopMatrix();
+
+     material(1);
+    glPushMatrix();
+    glTranslatef(-5,-3,i-1);
+    glRotatef(240,1,0,0);
+    glutSolidCone(1.2,4.5,40,40);
+    glPopMatrix();
+    i--;
+    
+    }
+
+
+
+    /* Nova slika se salje na ekran. */
+    glutSwapBuffers();
+}
+
+
+
+
+
+
