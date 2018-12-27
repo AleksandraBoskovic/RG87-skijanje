@@ -6,17 +6,24 @@
 #define TIMER_INTERVAL 50
 
 int animation_ongoing;
+double animation_parameter;
 
 float move;
+struct zastavica {int x,y,z;};
+typedef struct zastavica Zastavica;
 
+Zastavica nizZastavica [20];
 
 static void on_keyboard(unsigned char key,int x, int y);
 static void on_reshape(int width,int height);
 static void on_timer(int id);
 static void on_display(void);
 static void lights();
-static void material(int value);
-
+static void material(double valueX,double valueY,double valueZ);
+static void postaviJelke();
+static void napraviSkijasa();
+static void napraviPrepreke();
+static void postaviPrepreke();
 
 int main(int argc, char **argv)
 {
@@ -39,6 +46,7 @@ int main(int argc, char **argv)
     glEnable(GL_DEPTH_TEST);
 
      animation_ongoing=0;  
+     animation_parameter=0;
      move=0;
 
     /* Program ulazi u glavnu petlju. */
@@ -51,7 +59,7 @@ int main(int argc, char **argv)
 if(TIMER_ID!=id)
 return;
 
-move+=0.01;
+animation_parameter+=0.3;
 
 glutPostRedisplay();
 
@@ -91,6 +99,13 @@ static void on_keyboard(unsigned char key, int x, int y)
     glutPostRedisplay();
     break;
 
+    case 'r':
+    move=0;
+    animation_ongoing=0;
+    animation_parameter=0;
+    glutPostRedisplay();
+    break;
+
     }
 }
 
@@ -102,20 +117,20 @@ static void on_reshape(int width, int height)
     /* Podesava se projekcija. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60, (float) width / height, 1, 10);
+    gluPerspective(60, (float) width / height, 1, 60);
 }
 
 
 static void lights(){
 
 /* Pozicija svetla (u pitanju je direkcionalno svetlo). */
-    GLfloat light_position[] = { 0, 3, 2, 0 };
+    GLfloat light_position[] = { 0, 20, 60, 0 };
 
     /* Ambijentalna boja svetla. */
-    GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1 };
+    GLfloat light_ambient[] = { 0.3, 0.3, 0.3, 1 };
 
     /* Difuzna boja svetla. */
-    GLfloat light_diffuse[] = { 0.7, 0.7, 0.7, 1 };
+    GLfloat light_diffuse[] = { 0.9, 0.9, 0.9, 1 };
 
     /* Spekularna boja svetla. */
     GLfloat light_specular[] = { 0.9, 0.9, 0.9, 1 };
@@ -129,23 +144,26 @@ glEnable(GL_LIGHTING);
 
 
 
-
 }
 
-static void material(int value){
+
+static void material(double valueX,double valueY,double valueZ){
 /* Koeficijenti ambijentalne refleksije materijala. */
     GLfloat ambient_coeffs[] = { 0.1, 0.1, 0.3, 1 };
 
     /* Koeficijenti difuzne refleksije materijala. */
-    GLfloat diffuse_coeffs[] = { 0.3, 0.0, 0.0, 1 };
-
-    diffuse_coeffs[value]=1.0;
+    GLfloat diffuse_coeffs[] = { 0.0, 0.0, 0.0, 1 };
+     
+         diffuse_coeffs[0] = valueX;
+         diffuse_coeffs[1] = valueY;
+         diffuse_coeffs[2] = valueZ;
+    
 
     /* Koeficijenti spekularne refleksije materijala. */
     GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
 
     /* Koeficijent glatkosti materijala. */
-    GLfloat shininess = 20;
+    GLfloat shininess = 30;
 
 /* Podesavaju se parametri materijala. */
     glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_coeffs);
@@ -154,11 +172,6 @@ static void material(int value){
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
 }
-
-
-
-
-
 
 static void on_display(void)
 {
@@ -172,59 +185,244 @@ static void on_display(void)
     /* Podesava se vidna tacka. */
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0,3.7,8, 0, 0, 0, 0, 1, 0);
+    gluLookAt(0,15,60, 0, 0, 0, 0, 1, 0);
 
+    /*Kreira se ravan */
 
-    /* Kreira se kaciga. */
-    material(2);
+    material(1.0,1.0,1.0);
     glPushMatrix();
-    glTranslatef(move,0,5);
-    glutSolidSphere(0.6, 40, 40);
+    glTranslated(0,0,animation_parameter);
+    glScaled(50,1,120);
+    glutSolidCube(1);
     glPopMatrix();
 
-    /*Kreira se jelka*/
-
-    int i=50;
-
-    while(i>0){
-     material(1);
-    glPushMatrix();
-    glTranslatef(5,-3,i);
-    glRotatef(240,1,0,0);
-    glutSolidCone(1.2,6,40,40);
-    glPopMatrix();
-
-     material(1);
-    glPushMatrix();
-    glTranslatef(5,-3,i-1);
-    glRotatef(240,1,0,0);
-    glutSolidCone(1.2,4.5,40,40);
-    glPopMatrix();
-
-     material(1);
-    glPushMatrix();
-    glTranslatef(-5,-3,i);
-    glRotatef(240,1,0,0);
-    glutSolidCone(1.2,6,40,40);
-    glPopMatrix();
-
-     material(1);
-    glPushMatrix();
-    glTranslatef(-5,-3,i-1);
-    glRotatef(240,1,0,0);
-    glutSolidCone(1.2,4.5,40,40);
-    glPopMatrix();
-    i--;
     
+     
+     
+     napraviSkijasa();
+
+     if(animation_parameter==0){
+     postaviJelke();
+     napraviPrepreke();
+     postaviPrepreke();
+     }
+     else{
+      glTranslated(0,0,animation_parameter);
+      postaviJelke();
+      postaviPrepreke();
     }
-
-
-
+  
+    
     /* Nova slika se salje na ekran. */
     glutSwapBuffers();
 }
 
+void postaviJelke(){
 
+int k;
+
+for(k=(-55);k<60;k+=5){
+
+/* Desno cetiri reda jelki*/
+
+ material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(15,-2,k);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2.5,9,40,40);
+    glPopMatrix();
+
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(17,-2,k+2);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2.5,9,40,40);
+    glPopMatrix();
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(19,-2,k+1);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2,9,40,40);
+    glPopMatrix();
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(22,-2,k+3);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2,9,40,40);
+    glPopMatrix();
+
+
+    /* Levo cetiri reda jelki*/
+
+ material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(-15,-1.5,k);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2.5,9,40,40);
+    glPopMatrix();
+
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(-17,-1.5,k+2);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2.5,9,40,40);
+    glPopMatrix();
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(-19,-1.5,k+1);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2,9,40,40);
+    glPopMatrix();
+
+material(0.0,1.0,0.0);
+    glPushMatrix();
+    glTranslatef(-22,-1.5,k+3);
+    glRotatef(280,1,0,0);
+    glutSolidCone(2,9,40,40);
+    glPopMatrix();
+
+}
+
+}
+
+
+static void napraviSkijasa(){
+
+
+/* Kreira se kaciga. */
+    material(0.0,0.0,1.0);
+    glPushMatrix();
+    glTranslatef(move,4.5,45.5);
+    glutSolidSphere(0.6, 40, 40.5);
+    glPopMatrix();
+
+ /* kreiram telo */
+    material(0.0,0.0,1.0);
+    glPushMatrix();
+    glTranslatef(move,3,45.5);
+    glRotatef(280,1,0,0);
+    glutSolidCone(0.6,1.5,40,40);
+    glPopMatrix();
+
+
+/* Kreiram noge*/
+      material(0.0,0.0,1.0);
+    glPushMatrix();
+    glTranslatef(move-0.20,1.5,45);
+    glRotatef(280,1,0,0);
+    glutSolidCone(0.3,1.5,40,40);
+    glPopMatrix();
+
+
+
+    material(0.0,0.0,1.0);
+    glPushMatrix();
+    glTranslatef(move+0.20,1.5,45);
+    glRotatef(280,1,0,0);
+    glutSolidCone(0.3,1.5,40,40);
+    glPopMatrix();
+
+    /*Kreiram skije */
+
+    material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(move+0.20,1,45);
+    glScaled(0.6,0.4,3);
+    glutSolidCube(1);
+    glPopMatrix();
+
+    material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(move-0.20,1,45.);
+    glScaled(0.6,0.4,3);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+}
+
+
+static void napraviPrepreke(){
+
+int k;
+int kordinateZastavica[]={-10,-9,-8,-7,-6,-5,-4,-3,-2,0,10,9,8,7,6,5,4,3,2};
+for(k=0;k<10;k++){
+
+nizZastavica[k].x=kordinateZastavica[rand() % 19];
+nizZastavica[k].y=2;
+nizZastavica[k].z=(-60)+k*10;}
+
+}
+
+static void postaviPrepreke(){
+
+int j;
+
+for(j=0;j<10;j+=2)
+{
+ material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j].x,nizZastavica[j].y,nizZastavica[j].z);
+    glScaled(3,1.5,1);
+    glutSolidCube(1);
+    glPopMatrix();
+
+   material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j].x+1.5,1.5,nizZastavica[j].z);
+    glScaled(0.2,3,0.2);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+   material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j].x-1.5,1.5,nizZastavica[j].z);
+    glScaled(0.2,3,0.2);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+
+    material(0.0,0.0,1.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j+1].x,2,nizZastavica[j+1].z);
+    glScaled(3,1.5,1);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+ material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j+1].x+1.5,1.5,nizZastavica[j+1].z);
+    glScaled(0.2,3,0.2);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+   material(1.0,0.0,0.0);
+    glPushMatrix();
+    glTranslatef(nizZastavica[j+1].x-1.5,1.5,nizZastavica[j+1].z);
+    glScaled(0.2,3,0.2);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+
+
+}
+
+
+
+
+
+
+}
 
 
 
