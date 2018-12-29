@@ -6,13 +6,15 @@
 #define TIMER_INTERVAL 50
 
 int animation_ongoing;
-double animation_parameter;
-
+int animation_parameter;
+int perioda_transacije;
+int korak;
 float move;
 struct zastavica {int x,y,z;};
 typedef struct zastavica Zastavica;
 
-Zastavica nizZastavica [20];
+Zastavica nizZastavicaPrve [10];
+Zastavica nizZastavicaDruge [10];
 
 static void on_keyboard(unsigned char key,int x, int y);
 static void on_reshape(int width,int height);
@@ -22,8 +24,9 @@ static void lights();
 static void material(double valueX,double valueY,double valueZ);
 static void postaviJelke();
 static void napraviSkijasa();
-static void napraviPrepreke();
-static void postaviPrepreke();
+static void napraviPreprekePrve();
+static void napraviPreprekeDruge();
+static void postaviPrepreke(Zastavica *nizZastavica);
 
 int main(int argc, char **argv)
 {
@@ -48,7 +51,8 @@ int main(int argc, char **argv)
      animation_ongoing=0;  
      animation_parameter=0;
      move=0;
-
+     korak=0;
+     perioda_transacije=0;
     /* Program ulazi u glavnu petlju. */
     glutMainLoop();
 
@@ -59,7 +63,12 @@ int main(int argc, char **argv)
 if(TIMER_ID!=id)
 return;
 
-animation_parameter+=0.3;
+animation_parameter+=1;
+
+if((animation_parameter % 120)==0)
+{korak+=1;}
+
+perioda_transacije+=1;
 
 glutPostRedisplay();
 
@@ -103,6 +112,7 @@ static void on_keyboard(unsigned char key, int x, int y)
     move=0;
     animation_ongoing=0;
     animation_parameter=0;
+    perioda_transacije=0;
     glutPostRedisplay();
     break;
 
@@ -117,7 +127,7 @@ static void on_reshape(int width, int height)
     /* Podesava se projekcija. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60, (float) width / height, 1, 60);
+    gluPerspective(60, (float) width / height, 1, 120);
 }
 
 
@@ -187,30 +197,116 @@ static void on_display(void)
     glLoadIdentity();
     gluLookAt(0,15,60, 0, 0, 0, 0, 1, 0);
 
-    /*Kreira se ravan */
+ if(move>=13 || move<=(-13)){
+        move=0;
+        animation_parameter=0;
+        animation_ongoing=0;
+    }
 
+
+napraviSkijasa();
+
+if(perioda_transacije>240){
+    perioda_transacije=0;
+}
+
+
+
+if(animation_parameter!=0){
+glTranslated(0,0,perioda_transacije);}
+
+
+
+/*Kreiramo prvu ravan*/
+    
     material(1.0,1.0,1.0);
     glPushMatrix();
-    glTranslated(0,0,animation_parameter);
+    if(perioda_transacije>=120){
+    glTranslated(0,0,-240);}
     glScaled(50,1,120);
     glutSolidCube(1);
     glPopMatrix();
 
+glPushMatrix();
+ if(perioda_transacije>=120){
+    glTranslated(0,0,-240);}
+
+if(animation_parameter==0 || perioda_transacije==120){
+     postaviJelke();
+     napraviPreprekePrve();
+     postaviPrepreke(nizZastavicaPrve);
+     }
+    else{
+    postaviJelke();
+    postaviPrepreke(nizZastavicaPrve);
+
+     }
+glPopMatrix();
+
+
+
+
+/*Kreira se druga ravan*/
+
+    material(1.0,1.0,1.0);
+    glPushMatrix();
+    glTranslated(0,0,-120);
+    glScaled(50,1,120);
+    glutSolidCube(1);
+    glPopMatrix();
+
+
+ if(animation_parameter==0 || perioda_transacije==240){
+     postaviJelke();
+     napraviPreprekeDruge();
+     glPushMatrix();
+     glTranslated(0,0,-120);
+     postaviJelke();
+     postaviPrepreke(nizZastavicaDruge);
+     glPopMatrix();
+     }
+     else{
+    postaviJelke();
+     glPushMatrix();
+     glTranslated(0,0,-120);
+     postaviJelke();
+     postaviPrepreke(nizZastavicaDruge);
+     glPopMatrix();
+     
+     }
+
+
+
+/*
     
-     
-     
-     napraviSkijasa();
 
      if(animation_parameter==0){
      postaviJelke();
      napraviPrepreke();
      postaviPrepreke();
+     int i;
+     for(i=0;i<3*korak;i++){
+
+     glTranslated(0,0,-120*i);
+     postaviJelke();
+     postaviPrepreke();}
+
+
      }
      else{
       glTranslated(0,0,animation_parameter);
       postaviJelke();
       postaviPrepreke();
-    }
+ 
+     int m;
+     for(m=0;m<3*korak;m++){
+
+       glTranslated(0,0,-120*m);
+       postaviJelke();
+       postaviPrepreke();}
+
+
+    }*/
   
     
     /* Nova slika se salje na ekran. */
@@ -347,19 +443,41 @@ static void napraviSkijasa(){
 }
 
 
-static void napraviPrepreke(){
+static void napraviPreprekePrve(){
 
 int k;
-int kordinateZastavica[]={-10,-9,-8,-7,-6,-5,-4,-3,-2,0,10,9,8,7,6,5,4,3,2};
-for(k=0;k<10;k++){
+int kordinateZastavicaPlave[]={-1,0,10,9,8,7,6,5,4,3,2,1};
+int kordinateZastavicaCrvene[]={-10,-9,-8,-7,-6,-5,-4,-3,-2-1,0,1};
 
-nizZastavica[k].x=kordinateZastavica[rand() % 19];
-nizZastavica[k].y=2;
-nizZastavica[k].z=(-60)+k*10;}
+for(k=0;k<10;k++){
+if(k%2==0){
+nizZastavicaPrve[k].x=kordinateZastavicaPlave[rand() % 12];}
+else{
+nizZastavicaPrve[k].x=kordinateZastavicaCrvene[rand() % 12];
+}
+nizZastavicaPrve[k].y=2;
+nizZastavicaPrve[k].z=(-60)+k*10;}
 
 }
 
-static void postaviPrepreke(){
+static void napraviPreprekeDruge(){
+
+int k;
+int kordinateZastavicaPlave[]={-1,0,10,9,8,7,6,5,4,3,2,1};
+int kordinateZastavicaCrvene[]={-10,-9,-8,-7,-6,-5,-4,-3,-2-1,0,1};
+
+for(k=0;k<10;k++){
+if(k%2==0){
+nizZastavicaDruge[k].x=kordinateZastavicaPlave[rand() % 12];}
+else{
+nizZastavicaDruge[k].x=kordinateZastavicaCrvene[rand() % 12];
+}
+nizZastavicaDruge[k].y=2;
+nizZastavicaDruge[k].z=(-60)+k*10;}
+
+}
+
+static void postaviPrepreke(Zastavica *nizZastavica){
 
 int j;
 
