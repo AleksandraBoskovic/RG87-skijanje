@@ -133,6 +133,7 @@ static void on_keyboard(unsigned char key, int x, int y)
 
     case 'r':
     /*Vracanje na pocetak*/
+    korak=0;
     move=0;
     animation_ongoing=0;
     animation_parameter=0;
@@ -226,6 +227,7 @@ static void on_display(void)
 Vraca na pocetak*/
 
  if(move>=13 || move<=(-13)){
+        korak=0;
         move=0;
         animation_parameter=0;
         animation_ongoing=0;
@@ -324,6 +326,7 @@ if(nizZastavicaPrve[plave].z+perioda_transacije==45){
         animation_ongoing=0;
         animation_parameter=0;
         perioda_transacije=0;
+        korak=0;
     }
 }
 }
@@ -335,6 +338,7 @@ for(crvene=0;crvene<4;crvene++){
         animation_ongoing=0;
         animation_parameter=0;
         perioda_transacije=0;
+        korak=0;
         }
     }
 }
@@ -349,6 +353,7 @@ if(nizZastavicaDruge[plave2].z-120+perioda_transacije==45){
         animation_ongoing=0;
         animation_parameter=0;
         perioda_transacije=0;
+        korak=0;
     }
 }
 }
@@ -360,6 +365,7 @@ for(crvene2=0;crvene2<4;crvene2++){
         animation_ongoing=0;
         animation_parameter=0;
         perioda_transacije=0;
+        korak=0;
         }
     }
 }
