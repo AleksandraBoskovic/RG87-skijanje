@@ -1,3 +1,15 @@
+/*
+Dve ravni su postavljene tako da je prva po z osi gledano od -60 do 60 a druga od -60 do -180
+Na obe ravni postavljeno je nekoliko redova jelki sa obe strane i za svaku ravan odredjen niz prepreka 
+na njima.Figurica je postavljena na z osi na 45. Iluzija kretanja je definisana pomeranjem cele scene
+ka figuri dok je ona staticna i moze levo ili desno da se krece. Kada predje duzinu prve ravni
+ona se translira iza druge ravni i ponovo se biraju prpreke i iscrtavaju.Kada se predje i duzina 
+druge ravni ona se translira iza prve i za nju se takodje prave nove prpreke.Nakon toga smo ponovo u 
+pocetnoj situaciji prva ravan iza nje druga.
+Kretanje figurice je ograniceno izmedju jelki.
+Ograniceno da se plave prepreke oilaze sa leve strane a crvene sa desne. 
+
+*/
 #include <stdlib.h>
 #include <GL/glut.h>
 
@@ -8,13 +20,15 @@
 int animation_ongoing;
 int animation_parameter;
 int perioda_transacije;
+/*Koristi se za deljenje u tri slucaja smenjivanja dve ravni*/
 int korak;
+/*x-kordinata skijasa*/
 float move;
 struct zastavica {int x,y,z;};
 typedef struct zastavica Zastavica;
-
-Zastavica nizZastavicaPrve [10];
-Zastavica nizZastavicaDruge [10];
+/*Nizovi zastavica prve i druge ravni*/
+Zastavica nizZastavicaPrve [4];
+Zastavica nizZastavicaDruge [4];
 
 static void on_keyboard(unsigned char key,int x, int y);
 static void on_reshape(int width,int height);
@@ -64,9 +78,14 @@ if(TIMER_ID!=id)
 return;
 
 animation_parameter+=1;
-
+/*Duzine obe ravni koje se smenjuju su 120.Svaki put kada se menja poredak ravni uvecava se korak
+radi razlikovanja 3 situacije prva ravan i iza nje druga(korak%3==0)
+translirana prva ravan iza druge (korak%3==1)i treci slucaj translacija druge ravni iza prve(korak%3==2)*/
 if((animation_parameter % 120)==0)
 {korak+=1;}
+
+/*Perioda transkacije je uvek izmedju 0 i 240 jer je to ukupna duzina trajanja ova tri slucaja 
+Nakon cega se ponovo vracamo u situaciju 1 pa sve iznova */
 
 perioda_transacije+=1;
 
@@ -88,6 +107,7 @@ static void on_keyboard(unsigned char key, int x, int y)
         break;
 
     case 'g':
+    /*Pokretanje animacije*/
     if(!animation_ongoing){
        animation_ongoing=1;
        glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
@@ -95,20 +115,24 @@ static void on_keyboard(unsigned char key, int x, int y)
     break;
 
     case 's':
+    /*zaustavljanje animacije*/
     animation_ongoing=0;
     break;
 
     case 'd':
-    move+=0.3;
+    /*pomeranje po x osi figurice udesno*/
+    move+=1;
     glutPostRedisplay();
     break;
 
     case 'a':
-    move-=0.3;
+     /*pomeranje po x osi figurice ulevo*/
+    move-=1;
     glutPostRedisplay();
     break;
 
     case 'r':
+    /*Vracanje na pocetak*/
     move=0;
     animation_ongoing=0;
     animation_parameter=0;
@@ -197,6 +221,10 @@ static void on_display(void)
     glLoadIdentity();
     gluLookAt(0,15,60, 0, 0, 0, 0, 1, 0);
 
+
+/*Ogranicava se kretanje figurice po x osi.Greskom kada se udari u jelke sa strane 
+Vraca na pocetak*/
+
  if(move>=13 || move<=(-13)){
         move=0;
         animation_parameter=0;
@@ -204,8 +232,11 @@ static void on_display(void)
     }
 
 
+
+
 napraviSkijasa();
 
+/*Prosli smo kroz sva tri slucaja zamena ravni pa se vracamo na pocetni slucaj*/
 if(perioda_transacije>240){
     perioda_transacije=0;
 }
@@ -221,16 +252,21 @@ glTranslated(0,0,perioda_transacije);}
     
     material(1.0,1.0,1.0);
     glPushMatrix();
+
+/*Kada je perioda translacije >120 nasu prvu ravan pomeramo iza druge ravni jer smo je celu presli */
     if(perioda_transacije>=120){
     glTranslated(0,0,-240);}
+
     glScaled(50,1,120);
     glutSolidCube(1);
     glPopMatrix();
 
 glPushMatrix();
+/*Takodje sa ravni transliramo i njenje jelke i prepreke*/
  if(perioda_transacije>=120){
     glTranslated(0,0,-240);}
-
+/*Na pocetku animacije i u slucaju kada prvu ravan transliramo iza druge jer smo je presli
+na nju postavljamo nove random prepreke*/
 if(animation_parameter==0 || perioda_transacije==120){
      postaviJelke();
      napraviPreprekePrve();
@@ -255,7 +291,8 @@ glPopMatrix();
     glutSolidCube(1);
     glPopMatrix();
 
-
+/*Za drugu ravan kada predjemo 240 smo presli i nju transliramo je iza prve ravni i 
+pozivamo pravljenje novih prepreki*/
  if(animation_parameter==0 || perioda_transacije==240){
      postaviJelke();
      napraviPreprekeDruge();
@@ -275,39 +312,62 @@ glPopMatrix();
      
      }
 
+/*Kada je perioda <120 prelazimo prepreke prve ravni.
+Proveravamo da li je translacijom prepreka pomerena na z kordinatu figurice
+Ako jeste plavu prepreku ako nismo obisli sa leve strane vraca nas na pocetak.Crvenu prepreku 
+moramo obici sa desne strane.U nizu nizZastavicaPrve imamo zapamcenje tekuce kordinate zastavica  */
+if(perioda_transacije<120){
+int plave;
+for(plave=1;plave<4;plave+=2){
+if(nizZastavicaPrve[plave].z+perioda_transacije==45){
+    if(nizZastavicaPrve[plave].x-1.9<move){
+        animation_ongoing=0;
+        animation_parameter=0;
+        perioda_transacije=0;
+    }
+}
+}
+
+int crvene;
+for(crvene=0;crvene<4;crvene++){
+    if(nizZastavicaPrve[crvene].x+perioda_transacije==45){
+        if(nizZastavicaPrve[crvene].x+1.9>move){
+        animation_ongoing=0;
+        animation_parameter=0;
+        perioda_transacije=0;
+        }
+    }
+}
+
+}
+/*U suprotnom prelazimo drugu ravan i gledamo prepreke druge ravni na isti nacin kao za prvu ravan*/
+else{
+int plave2;
+for(plave2=1;plave2<4;plave2+=2){
+if(nizZastavicaDruge[plave2].z-120+perioda_transacije==45){
+    if(nizZastavicaDruge[plave2].x-1.9<move){
+        animation_ongoing=0;
+        animation_parameter=0;
+        perioda_transacije=0;
+    }
+}
+}
+
+int crvene2;
+for(crvene2=0;crvene2<4;crvene2++){
+    if(nizZastavicaDruge[crvene2].x-120+perioda_transacije==45){
+        if(nizZastavicaDruge[crvene2].x+1.9>move){
+        animation_ongoing=0;
+        animation_parameter=0;
+        perioda_transacije=0;
+        }
+    }
+}
 
 
-/*
-    
-
-     if(animation_parameter==0){
-     postaviJelke();
-     napraviPrepreke();
-     postaviPrepreke();
-     int i;
-     for(i=0;i<3*korak;i++){
-
-     glTranslated(0,0,-120*i);
-     postaviJelke();
-     postaviPrepreke();}
+}
 
 
-     }
-     else{
-      glTranslated(0,0,animation_parameter);
-      postaviJelke();
-      postaviPrepreke();
- 
-     int m;
-     for(m=0;m<3*korak;m++){
-
-       glTranslated(0,0,-120*m);
-       postaviJelke();
-       postaviPrepreke();}
-
-
-    }*/
-  
     
     /* Nova slika se salje na ekran. */
     glutSwapBuffers();
@@ -442,38 +502,41 @@ static void napraviSkijasa(){
 
 }
 
-
+/*Funkcija koja pravi kordinate prepreka prve ravni*/
 static void napraviPreprekePrve(){
 
 int k;
-int kordinateZastavicaPlave[]={-1,0,10,9,8,7,6,5,4,3,2,1};
-int kordinateZastavicaCrvene[]={-10,-9,-8,-7,-6,-5,-4,-3,-2-1,0,1};
+/*Definisem da plave prpreke stoje sa leve strane staze a crvene sa desne.
+Jer cu crvene obilaziti sa desne strane a plave sa leve*/
+int kordinateZastavicaCrvene[]={-1,0,7,6,5,4,3,2,1};
+int kordinateZastavicaPlave[]={-7,-6,-5,-4,-3,-2-1,0,1};
 
-for(k=0;k<10;k++){
+
+for(k=0;k<4;k++){
 if(k%2==0){
-nizZastavicaPrve[k].x=kordinateZastavicaPlave[rand() % 12];}
+nizZastavicaPrve[k].x=kordinateZastavicaCrvene[rand() % 9];}
 else{
-nizZastavicaPrve[k].x=kordinateZastavicaCrvene[rand() % 12];
+nizZastavicaPrve[k].x=kordinateZastavicaPlave[rand() % 9];
 }
 nizZastavicaPrve[k].y=2;
-nizZastavicaPrve[k].z=(-60)+k*10;}
+nizZastavicaPrve[k].z=(-60)+k*30;}
 
 }
-
+/*Funkcija koja pravi kordinate prepreka druge ravni*/
 static void napraviPreprekeDruge(){
 
 int k;
-int kordinateZastavicaPlave[]={-1,0,10,9,8,7,6,5,4,3,2,1};
-int kordinateZastavicaCrvene[]={-10,-9,-8,-7,-6,-5,-4,-3,-2-1,0,1};
+int kordinateZastavicaCrvene[]={-1,0,7,6,5,4,3,2,1};
+int kordinateZastavicaPlave[]={-7,-6,-5,-4,-3,-2-1,0,1};
 
-for(k=0;k<10;k++){
+for(k=0;k<4;k++){
 if(k%2==0){
-nizZastavicaDruge[k].x=kordinateZastavicaPlave[rand() % 12];}
+nizZastavicaDruge[k].x=kordinateZastavicaCrvene[rand() % 9];}
 else{
-nizZastavicaDruge[k].x=kordinateZastavicaCrvene[rand() % 12];
+nizZastavicaDruge[k].x=kordinateZastavicaPlave[rand() % 9];
 }
 nizZastavicaDruge[k].y=2;
-nizZastavicaDruge[k].z=(-60)+k*10;}
+nizZastavicaDruge[k].z=(-60)+k*30;}
 
 }
 
@@ -481,7 +544,10 @@ static void postaviPrepreke(Zastavica *nizZastavica){
 
 int j;
 
-for(j=0;j<10;j+=2)
+/*Prepreke sam postavila na rastojanju 30.Sad obezbedjujem da naizmenicno se iscrtavaju 
+plave i crvene prepreke*/
+
+for(j=0;j<3;j+=2)
 {
  material(1.0,0.0,0.0);
     glPushMatrix();
